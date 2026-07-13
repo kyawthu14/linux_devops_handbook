@@ -69,3 +69,41 @@ Automatically manages growing log files to prevent filling the disk.
    * **A:** It prevents log files from consuming all disk space and crashing the server. The `compress` option gzip-compresses old logs to save space.
 6. **Q:** How do you search `/var/log/syslog` for "error" case-insensitively?
    * **A:** `sudo grep -i "error" /var/log/syslog`
+
+---
+
+## 5.3 Boot Process & Troubleshooting (GRUB, System initialization)
+
+Troubleshooting system boot failures is a critical SRE task.
+
+### The 4 Boot Sequence Stages
+1. **BIOS / UEFI:** Hardware initializes, runs Power On Self Test (POST), finds boot disk.
+2. **GRUB (Bootloader):** Displays boot menu, loads selected kernel into memory.
+3. **Kernel:** Mounts root `/` filesystem, initializes hardware drivers.
+4. **Systemd (Init):** Starts PID 1 (`systemd`), which launches background targets and services.
+
+### Troubleshooting Commands
+* **`sudo journalctl -b`:** View logs for the current boot session.
+* **`sudo journalctl -xb`:** View current boot logs with detailed explanations (`-x`) to debug service failures.
+* **`sudo journalctl -b -1`:** View logs of the *previous* boot session (useful for post-crash analysis).
+* **`cat /etc/default/grub`:** Location of user boot settings (timeout, kernel arguments like `quiet splash`). Run `sudo update-grub` after editing.
+
+### Emergency Rescue: Single-User Mode
+If a config error prevents boot or the root password is lost:
+1. In the GRUB menu, press **`e`** to edit boot parameters.
+2. Find the line starting with `linux` and append **`init=/bin/bash`** to the end of it.
+3. Press **`Ctrl + X`** to boot directly to a password-less root command line.
+4. Remount the filesystem as read-write to make changes:
+   `mount -o remount,rw /`
+
+---
+
+## Verification Questions We Covered (Topic 5.3)
+
+1. **Q:** What is the very first user-space process (PID 1) started by the Linux kernel during boot?
+   * **A:** `systemd`
+2. **Q:** If your server is booting but hanging, which command should you run to view logs for the current boot with extra details?
+   * **A:** `sudo journalctl -xb`
+3. **Q:** If you get locked out of your system, how do you boot directly into a root command line?
+   * **A:** Press `e` in GRUB, append `init=/bin/bash` to the kernel (`linux`) line, boot with `Ctrl + X`, and remount the drive as read-write: `mount -o remount,rw /`.
+
