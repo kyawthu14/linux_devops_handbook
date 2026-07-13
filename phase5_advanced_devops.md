@@ -107,3 +107,46 @@ If a config error prevents boot or the root password is lost:
 3. **Q:** If you get locked out of your system, how do you boot directly into a root command line?
    * **A:** Press `e` in GRUB, append `init=/bin/bash` to the kernel (`linux`) line, boot with `Ctrl + X`, and remount the drive as read-write: `mount -o remount,rw /`.
 
+---
+
+## 5.4 Namespaces, Cgroups & Containers (The Technology Behind Docker)
+
+Containers are not virtual machines; they are native Linux processes isolated and restricted using kernel features.
+
+### Virtual Machines vs Containers
+* **Virtual Machine (VM):** Runs a full guest operating system on top of a hypervisor. It is resource-heavy, boots in minutes, and requires dedicated hardware allocations.
+* **Container:** Shares the host operating system kernel. It is lightweight, boots in milliseconds, uses minimal memory, and runs at native hardware speed.
+
+### 1. Namespaces (Isolation - What a process can SEE)
+Namespaces partition system resources so that processes in a namespace think they have their own dedicated resources.
+* **PID Namespace:** Isolates process IDs. Allows a container process to run as PID 1 (master process) inside its sandbox while mapping to a high-number PID on the host.
+* **NET Namespace:** Isolates network interfaces, IP addresses, routing tables, and ports.
+* **MNT Namespace:** Isolates filesystem mount points (giving the container its own isolated root `/` directory).
+* **UTS Namespace:** Isolates hostname and domain name.
+* **IPC Namespace:** Isolates System V IPC and POSIX message queues (shared memory).
+* **USER Namespace:** Isolates user and group IDs (run as `root` inside container, but maps to a non-privileged user on host).
+
+### 2. Control Groups / Cgroups (Resource Limits - What a process can USE)
+Cgroups group processes together to partition and limit resource usage.
+* **Resources limited:** CPU, Memory, Disk I/O, Network bandwidth.
+* **Out-of-Memory (OOM) Killer:** If a process in a cgroup exceeds its memory limit, the kernel's OOM Killer will immediately terminate it to protect host stability.
+
+### The `unshare` Command (Manual Containerization)
+You can create an isolated namespace manually in Linux without Docker using:
+```bash
+sudo unshare --fork --pid --mount-proc bash
+```
+* Running `ps aux` inside this shell will show only the bash process (as PID 1) and the `ps` command itself, completely isolating it from all other host processes. Run `exit` to destroy the namespace.
+
+---
+
+## Verification Questions We Covered (Topic 5.4)
+
+1. **Q:** What is the fundamental difference between a Virtual Machine (VM) and a Container?
+   * **A:** A VM runs a full guest OS on a hypervisor. A container runs directly on the host kernel and shares the host OS, making it lightweight and fast.
+2. **Q:** What is the difference in purpose between Namespaces and Cgroups in the Linux kernel?
+   * **A:** Namespaces control what a process can *see* (isolation). Cgroups control what a process can *use* (resource limits).
+3. **Q:** Which namespace isolates process IDs? Which namespace isolates network cards and ports?
+   * **A:** The PID namespace isolates process IDs (making a process think it is PID 1). The NET namespace isolates network cards, IPs, and ports.
+
+
